@@ -1,0 +1,1836 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#667eea">
+  <meta name="description" content="Aprende idiomas con flashcards - Tu app de estudio portátil">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FlashLearn">
+  <title>FlashLearn - Aprende Idiomas</title>
+  <link rel="manifest" href="#" id="manifest-placeholder">
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #ff6b6b;
+      --primary-dark: #ee5a52;
+      --secondary: #4ecdc4;
+      --accent: #ffe66d;
+      --dark: #2d3142;
+      --light: #f8f9fa;
+      --gray: #6c757d;
+      --success: #51cf66;
+      --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --gradient-warm: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 10px;
+      color: var(--dark);
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    /* Soporte para notch en iOS */
+    @supports (padding: max(0px)) {
+      body {
+        padding-left: max(10px, env(safe-area-inset-left));
+        padding-right: max(10px, env(safe-area-inset-right));
+        padding-top: max(10px, env(safe-area-inset-top));
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+      }
+    }
+
+    .app-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    /* Prevenir zoom en iOS al hacer focus */
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+
+    /* Mejorar scroll en iOS */
+    * {
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Evitar pull-to-refresh en algunos navegadores */
+    body {
+      overscroll-behavior-y: contain;
+    }
+
+    /* Estilos para cuando la app está instalada */
+    @media all and (display-mode: standalone) {
+      body {
+        user-select: none; /* Prevenir selección de texto accidental */
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      color: white;
+      padding: 10px;
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 8vw, 4rem);
+      font-weight: 900;
+      margin-bottom: 10px;
+      text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      letter-spacing: -2px;
+    }
+
+    .header p {
+      font-size: clamp(1rem, 4vw, 1.3rem);
+      opacity: 0.95;
+      font-weight: 600;
+    }
+
+    .main-card {
+      background: white;
+      border-radius: 20px;
+      padding: clamp(20px, 5vw, 40px);
+      box-shadow: var(--shadow-lg);
+      animation: slideUp 0.5s ease-out;
+      margin-bottom: 20px;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      border-bottom: 3px solid #e9ecef;
+      padding-bottom: 0;
+    }
+
+    .nav-tab {
+      padding: 15px 30px;
+      border: none;
+      background: transparent;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 15px 15px 0 0;
+      transition: all 0.3s ease;
+      color: var(--gray);
+      font-family: 'Quicksand', sans-serif;
+    }
+
+    .nav-tab:hover {
+      background: #f8f9fa;
+      color: var(--primary);
+    }
+
+    .nav-tab.active {
+      background: var(--gradient);
+      color: white;
+      box-shadow: 0 -4px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      font-weight: 900;
+      margin-bottom: 25px;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .btn {
+      padding: 14px 24px;
+      border: none;
+      border-radius: 15px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Quicksand', sans-serif;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      min-height: 44px; /* Mínimo recomendado para área táctil */
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary {
+      background: var(--gradient);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: var(--secondary);
+      color: white;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-danger {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-outline {
+      background: white;
+      color: var(--dark);
+      border: 2px solid var(--dark);
+    }
+
+    .collections-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .collection-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 30px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      color: white;
+    }
+
+    .collection-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .collection-card:hover::before {
+      opacity: 1;
+    }
+
+    .collection-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+    }
+
+    .collection-card:nth-child(3n+1) {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .collection-card:nth-child(3n+2) {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .collection-card h3 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .collection-card p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .collection-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .collection-actions button {
+      flex: 1;
+      padding: 8px;
+      font-size: 0.9rem;
+    }
+
+    .form-group {
+      margin-bottom: 25px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: var(--dark);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: 'Quicksand', sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+
+    .flashcard-3d {
+      perspective: 1000px;
+      width: 100%;
+      max-width: 600px;
+      height: clamp(280px, 50vh, 400px);
+      margin: 20px auto;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .flashcard-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+    }
+
+    .flashcard-3d.flipped .flashcard-inner {
+      transform: rotateY(180deg);
+    }
+
+    .flashcard-front,
+    .flashcard-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(20px, 5vw, 40px);
+      box-shadow: var(--shadow-lg);
+      font-size: clamp(1.8rem, 6vw, 2.5rem);
+      font-weight: 700;
+      word-break: break-word;
+      text-align: center;
+    }
+
+    .flashcard-front {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .flashcard-back {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      transform: rotateY(180deg);
+    }
+
+    .study-controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .flashcard-counter {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--gray);
+    }
+
+    .flashcards-list {
+      display: grid;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .flashcard-item {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .flashcard-item:hover {
+      border-color: var(--primary);
+      transform: translateX(5px);
+    }
+
+    .flashcard-content {
+      flex: 1;
+    }
+
+    .flashcard-content strong {
+      display: block;
+      font-size: 1.3rem;
+      color: var(--dark);
+      margin-bottom: 5px;
+    }
+
+    .flashcard-content span {
+      color: var(--gray);
+      font-size: 1.1rem;
+    }
+
+    .add-new-card {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+      border: 3px dashed #667eea;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #667eea;
+      padding: 40px;
+      border-radius: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .add-new-card:hover {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+      transform: scale(1.02);
+    }
+
+    .collection-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin: 25px 0;
+    }
+
+    .collection-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 15px 25px;
+      background: #f8f9fa;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .collection-checkbox:hover {
+      border-color: var(--primary);
+      background: white;
+    }
+
+    .collection-checkbox input {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .collection-checkbox label {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin: 0;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray);
+    }
+
+    .empty-state h3 {
+      font-size: 2rem;
+      margin-bottom: 15px;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .empty-state p {
+      font-size: 1.2rem;
+      margin-bottom: 25px;
+    }
+
+    .back-button {
+      margin-bottom: 20px;
+    }
+
+    .hint-text {
+      text-align: center;
+      color: white;
+      font-size: 1.1rem;
+      margin-top: 15px;
+      opacity: 0.9;
+      font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 5px;
+      }
+
+      .header {
+        margin-bottom: 15px;
+      }
+
+      .header h1 {
+        font-size: 2.2rem;
+      }
+
+      .header p {
+        font-size: 1rem;
+      }
+
+      .main-card {
+        padding: 15px;
+        border-radius: 15px;
+      }
+
+      .section-title {
+        font-size: 1.5rem;
+      }
+
+      .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 5px;
+      }
+
+      .nav-tabs::-webkit-scrollbar {
+        display: none;
+      }
+
+      .nav-tab {
+        padding: 12px 20px;
+        font-size: 0.95rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .flashcard-3d {
+        height: 280px;
+        margin: 15px auto;
+      }
+
+      .flashcard-front,
+      .flashcard-back {
+        font-size: 1.8rem;
+        padding: 20px;
+      }
+
+      .collections-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+
+      .collection-card {
+        padding: 20px;
+      }
+
+      .btn {
+        padding: 12px 20px;
+        font-size: 0.95rem;
+      }
+
+      .study-controls {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .study-controls .btn {
+        width: 100%;
+      }
+
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        font-size: 16px; /* Previene zoom en iOS */
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 1.8rem;
+      }
+
+      .section-title {
+        font-size: 1.3rem;
+        gap: 10px;
+      }
+
+      .flashcard-3d {
+        height: 240px;
+      }
+
+      .flashcard-front,
+      .flashcard-back {
+        font-size: 1.5rem;
+      }
+
+      .collection-card h3 {
+        font-size: 1.4rem;
+      }
+    }
+
+    /* Modo paisaje en móviles */
+    @media (max-height: 500px) and (orientation: landscape) {
+      .header {
+        margin-bottom: 10px;
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+      }
+
+      .header p {
+        font-size: 0.9rem;
+      }
+
+      .main-card {
+        padding: 15px;
+      }
+
+      .flashcard-3d {
+        height: 200px;
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    details summary {
+      list-style: none;
+    }
+
+    details summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details[open] summary {
+      margin-bottom: 15px;
+    }
+
+    details summary:hover {
+      background: #f0f0f0 !important;
+    }
+
+    /* Scroll personalizado */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #667eea;
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #764ba2;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Componente de banner de instalación PWA
+    function InstallBanner({ onInstall, onDismiss }) {
+      return (
+        <div style={{
+          position: 'fixed',
+          bottom: '20px',
+          left: '10px',
+          right: '10px',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          padding: '20px',
+          borderRadius: '15px',
+          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+          zIndex: 9999,
+          animation: 'slideUp 0.5s ease-out',
+          maxWidth: '500px',
+          margin: '0 auto'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+            <div style={{ fontSize: '1.8rem' }}>📱</div>
+            <button 
+              onClick={onDismiss}
+              style={{
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                color: 'white',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                borderRadius: '50%',
+                width: '30px',
+                height: '30px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              ×
+            </button>
+          </div>
+          <h3 style={{ margin: '0 0 10px 0', fontSize: '1.2rem' }}>
+            ¡Instala FlashLearn!
+          </h3>
+          <p style={{ margin: '0 0 15px 0', fontSize: '0.95rem', opacity: 0.95 }}>
+            Accede rápidamente desde tu pantalla de inicio. Funciona offline y como una app nativa.
+          </p>
+          <button
+            onClick={onInstall}
+            style={{
+              background: 'white',
+              color: '#667eea',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '10px',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              width: '100%',
+              fontFamily: 'Quicksand, sans-serif'
+            }}
+          >
+            Instalar Aplicación
+          </button>
+        </div>
+      );
+    }
+
+    function App() {
+      const [view, setView] = useState('collections'); // collections, study, collection-detail
+      const [collections, setCollections] = useState([]);
+      const [flashcards, setFlashcards] = useState([]);
+      const [selectedCollection, setSelectedCollection] = useState(null);
+      const [selectedCollectionsForStudy, setSelectedCollectionsForStudy] = useState([]);
+      const [currentCardIndex, setCurrentCardIndex] = useState(0);
+      const [isFlipped, setIsFlipped] = useState(false);
+      const [showNewCollectionForm, setShowNewCollectionForm] = useState(false);
+      const [showNewFlashcardForm, setShowNewFlashcardForm] = useState(false);
+      const [shuffledStudyCards, setShuffledStudyCards] = useState([]);
+      const [statistics, setStatistics] = useState({});
+      const [sessionStats, setSessionStats] = useState({ correct: 0, incorrect: 0, cards: [] });
+      const [deferredPrompt, setDeferredPrompt] = useState(null);
+      const [showInstallBanner, setShowInstallBanner] = useState(false);
+
+      // Form states
+      const [newCollectionName, setNewCollectionName] = useState('');
+      const [newFlashcardFront, setNewFlashcardFront] = useState('');
+      const [newFlashcardBack, setNewFlashcardBack] = useState('');
+      const [selectedCollectionId, setSelectedCollectionId] = useState('');
+
+      // Load data on mount
+      useEffect(() => {
+        loadData();
+        
+        // PWA: Detectar si la app puede ser instalada
+        const handleBeforeInstallPrompt = (e) => {
+          e.preventDefault();
+          setDeferredPrompt(e);
+          
+          // Mostrar banner solo si no está instalada y no se ha rechazado antes
+          const dismissed = localStorage.getItem('pwa_install_dismissed');
+          const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+          
+          if (!dismissed && !isStandalone) {
+            setTimeout(() => setShowInstallBanner(true), 2000); // Mostrar después de 2 segundos
+          }
+        };
+
+        // Solo registrar el evento si no estamos en file://
+        if (window.location.protocol === 'https:' || window.location.protocol === 'http:') {
+          window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        }
+
+        return () => {
+          if (window.location.protocol === 'https:' || window.location.protocol === 'http:') {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+          }
+        };
+      }, []);
+
+      const loadData = () => {
+        try {
+          const collectionsData = localStorage.getItem('flashlearn_collections');
+          const flashcardsData = localStorage.getItem('flashlearn_flashcards');
+          const statisticsData = localStorage.getItem('flashlearn_statistics');
+          
+          if (collectionsData) {
+            setCollections(JSON.parse(collectionsData));
+          }
+          if (flashcardsData) {
+            setFlashcards(JSON.parse(flashcardsData));
+          }
+          if (statisticsData) {
+            setStatistics(JSON.parse(statisticsData));
+          }
+        } catch (error) {
+          console.log('No previous data found, starting fresh');
+        }
+      };
+
+      const saveCollections = (newCollections) => {
+        setCollections(newCollections);
+        localStorage.setItem('flashlearn_collections', JSON.stringify(newCollections));
+      };
+
+      const saveFlashcards = (newFlashcards) => {
+        setFlashcards(newFlashcards);
+        localStorage.setItem('flashlearn_flashcards', JSON.stringify(newFlashcards));
+      };
+
+      const saveStatistics = (newStatistics) => {
+        setStatistics(newStatistics);
+        localStorage.setItem('flashlearn_statistics', JSON.stringify(newStatistics));
+      };
+
+      const createCollection = () => {
+        if (!newCollectionName.trim()) return;
+        
+        const newCollection = {
+          id: Date.now().toString(),
+          name: newCollectionName,
+          createdAt: new Date().toISOString()
+        };
+        
+        saveCollections([...collections, newCollection]);
+        setNewCollectionName('');
+        setShowNewCollectionForm(false);
+      };
+
+      const deleteCollection = (id) => {
+        if (!confirm('¿Estás seguro de eliminar esta colección?')) return;
+        
+        const updatedCollections = collections.filter(c => c.id !== id);
+        const updatedFlashcards = flashcards.filter(f => f.collectionId !== id);
+        
+        saveCollections(updatedCollections);
+        saveFlashcards(updatedFlashcards);
+      };
+
+      const createFlashcard = () => {
+        if (!newFlashcardFront.trim() || !newFlashcardBack.trim() || !selectedCollectionId) return;
+        
+        const newFlashcard = {
+          id: Date.now().toString(),
+          front: newFlashcardFront,
+          back: newFlashcardBack,
+          collectionId: selectedCollectionId,
+          createdAt: new Date().toISOString()
+        };
+        
+        saveFlashcards([...flashcards, newFlashcard]);
+        setNewFlashcardFront('');
+        setNewFlashcardBack('');
+        setShowNewFlashcardForm(false);
+      };
+
+      const deleteFlashcard = (id) => {
+        const updatedFlashcards = flashcards.filter(f => f.id !== id);
+        saveFlashcards(updatedFlashcards);
+      };
+
+      const exportData = () => {
+        const data = {
+          collections,
+          flashcards,
+          statistics,
+          exportDate: new Date().toISOString()
+        };
+        const dataStr = JSON.stringify(data, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `flashlearn-backup-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+      };
+
+      const importData = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            if (data.collections && data.flashcards) {
+              if (confirm('¿Deseas importar estos datos? Esto reemplazará tus datos actuales.')) {
+                saveCollections(data.collections);
+                saveFlashcards(data.flashcards);
+                if (data.statistics) {
+                  saveStatistics(data.statistics);
+                }
+                alert('¡Datos importados exitosamente!');
+              }
+            } else {
+              alert('Archivo de respaldo inválido');
+            }
+          } catch (error) {
+            alert('Error al importar datos');
+          }
+          // Reset input file
+          event.target.value = '';
+        };
+        reader.readAsText(file);
+      };
+
+      // PWA: Función para instalar la app
+      const handleInstallClick = async () => {
+        if (!deferredPrompt) {
+          alert('La instalación no está disponible en este momento');
+          return;
+        }
+
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        
+        if (outcome === 'accepted') {
+          console.log('Usuario aceptó la instalación');
+        }
+        
+        setDeferredPrompt(null);
+        setShowInstallBanner(false);
+      };
+
+      // PWA: Función para cerrar el banner
+      const handleDismissInstall = () => {
+        setShowInstallBanner(false);
+        localStorage.setItem('pwa_install_dismissed', 'true');
+      };
+
+      const getFlashcardsByCollection = (collectionId) => {
+        return flashcards.filter(f => f.collectionId === collectionId);
+      };
+
+      // Función para mezclar aleatoriamente un array (Fisher-Yates shuffle)
+      const shuffleArray = (array) => {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      };
+
+      const startStudySession = () => {
+        if (selectedCollectionsForStudy.length === 0) {
+          alert('Por favor, selecciona al menos una colección para estudiar');
+          return;
+        }
+        
+        // Obtener flashcards de las colecciones seleccionadas
+        const studyCards = flashcards.filter(f => selectedCollectionsForStudy.includes(f.collectionId));
+        
+        // Mezclar las flashcards aleatoriamente
+        const shuffled = shuffleArray(studyCards);
+        setShuffledStudyCards(shuffled);
+        
+        // Resetear estadísticas de sesión
+        setSessionStats({ correct: 0, incorrect: 0, cards: [] });
+        
+        setCurrentCardIndex(0);
+        setIsFlipped(false);
+        setView('study');
+      };
+
+      const startFocusedPractice = (collectionId) => {
+        const collectionCards = getFlashcardsByCollection(collectionId);
+        
+        // Filtrar solo las tarjetas que necesitan práctica (menos del 70% de precisión o no estudiadas)
+        const cardsNeedingPractice = collectionCards.filter(card => {
+          const stats = getFlashcardStats(card.id);
+          return stats.total === 0 || stats.accuracy < 70;
+        });
+        
+        if (cardsNeedingPractice.length === 0) {
+          alert('¡Excelente! No hay tarjetas que necesiten práctica en esta colección. ¡Dominas todo! 🎉');
+          return;
+        }
+        
+        if (confirm(`Encontramos ${cardsNeedingPractice.length} tarjeta${cardsNeedingPractice.length !== 1 ? 's' : ''} que necesita${cardsNeedingPractice.length !== 1 ? 'n' : ''} práctica. ¿Comenzar?`)) {
+          // Mezclar las flashcards aleatoriamente
+          const shuffled = shuffleArray(cardsNeedingPractice);
+          setShuffledStudyCards(shuffled);
+          setSelectedCollectionsForStudy([collectionId]);
+          
+          // Resetear estadísticas de sesión
+          setSessionStats({ correct: 0, incorrect: 0, cards: [] });
+          
+          setCurrentCardIndex(0);
+          setIsFlipped(false);
+          setView('study');
+        }
+      };
+
+      const getStudyFlashcards = () => {
+        return shuffledStudyCards;
+      };
+
+      const nextCard = () => {
+        const studyCards = getStudyFlashcards();
+        setCurrentCardIndex((prev) => (prev + 1) % studyCards.length);
+        setIsFlipped(false);
+      };
+
+      const previousCard = () => {
+        const studyCards = getStudyFlashcards();
+        setCurrentCardIndex((prev) => (prev - 1 + studyCards.length) % studyCards.length);
+        setIsFlipped(false);
+      };
+
+      const toggleFlip = () => {
+        setIsFlipped(!isFlipped);
+      };
+
+      const reshuffleCards = () => {
+        const shuffled = shuffleArray(shuffledStudyCards);
+        setShuffledStudyCards(shuffled);
+        setCurrentCardIndex(0);
+        setIsFlipped(false);
+      };
+
+      const markAnswer = (isCorrect) => {
+        const studyCards = getStudyFlashcards();
+        const currentCard = studyCards[currentCardIndex];
+        
+        if (!currentCard) return;
+        
+        // Actualizar estadísticas generales
+        const newStatistics = { ...statistics };
+        if (!newStatistics[currentCard.id]) {
+          newStatistics[currentCard.id] = {
+            correct: 0,
+            incorrect: 0,
+            lastStudied: new Date().toISOString()
+          };
+        }
+        
+        if (isCorrect) {
+          newStatistics[currentCard.id].correct += 1;
+        } else {
+          newStatistics[currentCard.id].incorrect += 1;
+        }
+        newStatistics[currentCard.id].lastStudied = new Date().toISOString();
+        
+        saveStatistics(newStatistics);
+        
+        // Actualizar estadísticas de sesión
+        const newSessionStats = { ...sessionStats };
+        if (isCorrect) {
+          newSessionStats.correct += 1;
+        } else {
+          newSessionStats.incorrect += 1;
+        }
+        newSessionStats.cards.push({
+          cardId: currentCard.id,
+          front: currentCard.front,
+          back: currentCard.back,
+          isCorrect: isCorrect
+        });
+        setSessionStats(newSessionStats);
+        
+        // Avanzar a la siguiente tarjeta
+        nextCard();
+      };
+
+      const toggleCollectionSelection = (collectionId) => {
+        setSelectedCollectionsForStudy(prev => 
+          prev.includes(collectionId)
+            ? prev.filter(id => id !== collectionId)
+            : [...prev, collectionId]
+        );
+      };
+
+      const getCollectionStats = (collectionId) => {
+        const collectionCards = getFlashcardsByCollection(collectionId);
+        let totalCorrect = 0;
+        let totalIncorrect = 0;
+        let studied = 0;
+        
+        collectionCards.forEach(card => {
+          if (statistics[card.id]) {
+            totalCorrect += statistics[card.id].correct;
+            totalIncorrect += statistics[card.id].incorrect;
+            studied += 1;
+          }
+        });
+        
+        const total = collectionCards.length;
+        const accuracy = totalCorrect + totalIncorrect > 0 
+          ? Math.round((totalCorrect / (totalCorrect + totalIncorrect)) * 100) 
+          : 0;
+        
+        return {
+          total,
+          studied,
+          totalCorrect,
+          totalIncorrect,
+          accuracy
+        };
+      };
+
+      const getFlashcardStats = (flashcardId) => {
+        if (!statistics[flashcardId]) {
+          return { correct: 0, incorrect: 0, total: 0, accuracy: 0 };
+        }
+        
+        const stats = statistics[flashcardId];
+        const total = stats.correct + stats.incorrect;
+        const accuracy = total > 0 ? Math.round((stats.correct / total) * 100) : 0;
+        
+        return {
+          ...stats,
+          total,
+          accuracy
+        };
+      };
+
+      // Render Collections View
+      const renderCollections = () => (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+            <h2 className="section-title">📚 Mis Colecciones</h2>
+            <button 
+              className="btn btn-primary"
+              onClick={() => setShowNewCollectionForm(!showNewCollectionForm)}
+            >
+              ➕ Nueva Colección
+            </button>
+          </div>
+
+          {showNewCollectionForm && (
+            <div style={{ background: '#f8f9fa', padding: '25px', borderRadius: '15px', marginBottom: '25px' }}>
+              <div className="form-group">
+                <label>Nombre de la Colección</label>
+                <input
+                  type="text"
+                  value={newCollectionName}
+                  onChange={(e) => setNewCollectionName(e.target.value)}
+                  placeholder="Ej: Vocabulario de Trabajo, Verbos en Inglés..."
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button className="btn btn-success" onClick={createCollection}>
+                  Crear Colección
+                </button>
+                <button className="btn btn-outline" onClick={() => setShowNewCollectionForm(false)}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+
+          {collections.length === 0 ? (
+            <div className="empty-state">
+              <h3>¡Empieza tu viaje de aprendizaje!</h3>
+              <p>Crea tu primera colección de flashcards</p>
+              <button className="btn btn-primary pulse" onClick={() => setShowNewCollectionForm(true)}>
+                ➕ Crear Primera Colección
+              </button>
+            </div>
+          ) : (
+            <div className="collections-grid">
+              {collections.map((collection) => {
+                const cardCount = getFlashcardsByCollection(collection.id).length;
+                const stats = getCollectionStats(collection.id);
+                return (
+                  <div 
+                    key={collection.id} 
+                    className="collection-card"
+                    onClick={() => {
+                      setSelectedCollection(collection);
+                      setView('collection-detail');
+                    }}
+                  >
+                    <h3>{collection.name}</h3>
+                    <p>{cardCount} flashcard{cardCount !== 1 ? 's' : ''}</p>
+                    {stats.studied > 0 && (
+                      <div style={{ marginTop: '15px', fontSize: '0.9rem', opacity: 0.95 }}>
+                        <div>📊 Estudiadas: {stats.studied}/{stats.total}</div>
+                        <div>✅ Precisión: {stats.accuracy}%</div>
+                        <div style={{ marginTop: '8px', background: 'rgba(255,255,255,0.3)', borderRadius: '10px', height: '8px', overflow: 'hidden' }}>
+                          <div style={{ width: `${stats.accuracy}%`, height: '100%', background: 'white', transition: 'width 0.3s ease' }}></div>
+                        </div>
+                      </div>
+                    )}
+                    <div className="collection-actions" onClick={(e) => e.stopPropagation()}>
+                      <button 
+                        className="btn btn-danger"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteCollection(collection.id);
+                        }}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      );
+
+      // Render Collection Detail View
+      const renderCollectionDetail = () => {
+        if (!selectedCollection) return null;
+        const collectionCards = getFlashcardsByCollection(selectedCollection.id);
+
+        return (
+          <>
+            <button 
+              className="btn btn-outline back-button"
+              onClick={() => setView('collections')}
+            >
+              ← Volver a Colecciones
+            </button>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+              <h2 className="section-title">📖 {selectedCollection.name}</h2>
+              <button 
+                className="btn btn-primary"
+                onClick={() => setShowNewFlashcardForm(!showNewFlashcardForm)}
+              >
+                ➕ Nueva Flashcard
+              </button>
+            </div>
+
+            {showNewFlashcardForm && (
+              <div style={{ background: '#f8f9fa', padding: '25px', borderRadius: '15px', marginBottom: '25px' }}>
+                <div className="form-group">
+                  <label>Palabra / Frase (Frente)</label>
+                  <input
+                    type="text"
+                    value={newFlashcardFront}
+                    onChange={(e) => setNewFlashcardFront(e.target.value)}
+                    placeholder="Ej: Hello"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Traducción (Reverso)</label>
+                  <input
+                    type="text"
+                    value={newFlashcardBack}
+                    onChange={(e) => setNewFlashcardBack(e.target.value)}
+                    placeholder="Ej: Hola"
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button 
+                    className="btn btn-success" 
+                    onClick={() => {
+                      setSelectedCollectionId(selectedCollection.id);
+                      createFlashcard();
+                    }}
+                  >
+                    Crear Flashcard
+                  </button>
+                  <button className="btn btn-outline" onClick={() => setShowNewFlashcardForm(false)}>
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {collectionCards.length === 0 ? (
+              <div className="empty-state">
+                <h3>Esta colección está vacía</h3>
+                <p>Agrega tu primera flashcard para empezar</p>
+                <button className="btn btn-primary pulse" onClick={() => setShowNewFlashcardForm(true)}>
+                  ➕ Crear Primera Flashcard
+                </button>
+              </div>
+            ) : (
+              <div className="flashcards-list">
+                {collectionCards.map((card) => {
+                  const cardStats = getFlashcardStats(card.id);
+                  return (
+                    <div key={card.id} className="flashcard-item">
+                      <div className="flashcard-content">
+                        <strong>{card.front}</strong>
+                        <span>{card.back}</span>
+                        {cardStats.total > 0 && (
+                          <div style={{ marginTop: '8px', fontSize: '0.9rem', color: 'var(--gray)' }}>
+                            📊 {cardStats.accuracy}% de precisión ({cardStats.correct}✅ / {cardStats.incorrect}❌)
+                          </div>
+                        )}
+                      </div>
+                      <button 
+                        className="btn btn-danger"
+                        onClick={() => deleteFlashcard(card.id)}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        );
+      };
+
+      // Render Statistics View
+      const renderStatistics = () => {
+        const hasStats = Object.keys(statistics).length > 0;
+        
+        return (
+          <>
+            <h2 className="section-title">📊 Estadísticas Totales</h2>
+            
+            <div style={{ background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)', padding: '15px', borderRadius: '15px', marginBottom: '25px', textAlign: 'center' }}>
+              <p style={{ fontSize: '1rem', color: 'var(--dark)', fontWeight: '600', margin: 0 }}>
+                📈 Estas son tus estadísticas acumuladas de todas las sesiones de estudio
+              </p>
+            </div>
+            
+            {!hasStats ? (
+              <div className="empty-state">
+                <h3>Aún no hay estadísticas</h3>
+                <p>Comienza a estudiar para ver tu progreso aquí</p>
+                <button className="btn btn-primary" onClick={() => setView('study-selection')}>
+                  🎯 Comenzar a Estudiar
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gap: '30px' }}>
+                {collections.map((collection) => {
+                  const collectionCards = getFlashcardsByCollection(collection.id);
+                  const stats = getCollectionStats(collection.id);
+                  
+                  if (stats.studied === 0) return null;
+                  
+                  return (
+                    <div key={collection.id} style={{ background: '#f8f9fa', padding: '25px', borderRadius: '20px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                        <h3 style={{ fontSize: '1.8rem', fontWeight: '700', color: 'var(--dark)', margin: 0 }}>
+                          {collection.name}
+                        </h3>
+                        <button 
+                          className="btn btn-primary"
+                          onClick={() => startFocusedPractice(collection.id)}
+                          style={{ fontSize: '1rem' }}
+                        >
+                          🎯 Practicar Difíciles
+                        </button>
+                      </div>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginBottom: '25px' }}>
+                        <div style={{ background: 'white', padding: '20px', borderRadius: '15px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--primary)' }}>{stats.studied}/{stats.total}</div>
+                          <div style={{ fontSize: '0.9rem', color: 'var(--gray)', marginTop: '5px' }}>Estudiadas</div>
+                        </div>
+                        <div style={{ background: 'white', padding: '20px', borderRadius: '15px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--success)' }}>{stats.accuracy}%</div>
+                          <div style={{ fontSize: '0.9rem', color: 'var(--gray)', marginTop: '5px' }}>Precisión</div>
+                        </div>
+                        <div style={{ background: 'white', padding: '20px', borderRadius: '15px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--secondary)' }}>{stats.totalCorrect}</div>
+                          <div style={{ fontSize: '0.9rem', color: 'var(--gray)', marginTop: '5px' }}>Correctas</div>
+                        </div>
+                        <div style={{ background: 'white', padding: '20px', borderRadius: '15px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--primary)' }}>{stats.totalIncorrect}</div>
+                          <div style={{ fontSize: '0.9rem', color: 'var(--gray)', marginTop: '5px' }}>Incorrectas</div>
+                        </div>
+                      </div>
+                      
+                      <details style={{ marginTop: '20px' }}>
+                        <summary style={{ cursor: 'pointer', fontWeight: '600', fontSize: '1.1rem', padding: '10px', background: 'white', borderRadius: '10px' }}>
+                          Ver detalles por tarjeta ({collectionCards.length} flashcards)
+                        </summary>
+                        <div style={{ marginTop: '15px', display: 'grid', gap: '10px' }}>
+                          {collectionCards
+                            .map(card => ({ card, stats: getFlashcardStats(card.id) }))
+                            .sort((a, b) => {
+                              // Ordenar por precisión (menor primero) para ver cuáles necesitan más práctica
+                              if (a.stats.total === 0 && b.stats.total === 0) return 0;
+                              if (a.stats.total === 0) return 1;
+                              if (b.stats.total === 0) return -1;
+                              return a.stats.accuracy - b.stats.accuracy;
+                            })
+                            .map(({ card, stats }) => (
+                              <div key={card.id} style={{ 
+                                background: 'white', 
+                                padding: '15px', 
+                                borderRadius: '12px', 
+                                display: 'flex', 
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                border: stats.total > 0 && stats.accuracy < 50 ? '2px solid var(--primary)' : '2px solid transparent'
+                              }}>
+                                <div style={{ flex: 1 }}>
+                                  <strong style={{ fontSize: '1.1rem' }}>{card.front}</strong>
+                                  <span style={{ color: 'var(--gray)', marginLeft: '10px' }}>→ {card.back}</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                                  {stats.total > 0 ? (
+                                    <>
+                                      <div style={{ textAlign: 'center', minWidth: '80px' }}>
+                                        <div style={{ fontSize: '1.3rem', fontWeight: '700', color: stats.accuracy >= 70 ? 'var(--success)' : stats.accuracy >= 50 ? 'var(--accent)' : 'var(--primary)' }}>
+                                          {stats.accuracy}%
+                                        </div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--gray)' }}>
+                                          {stats.correct}✅ / {stats.incorrect}❌
+                                        </div>
+                                      </div>
+                                      {stats.accuracy < 50 && (
+                                        <span style={{ background: 'var(--primary)', color: 'white', padding: '4px 8px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600' }}>
+                                          Necesita práctica
+                                        </span>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <span style={{ color: 'var(--gray)', fontSize: '0.9rem' }}>No estudiada</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </details>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        );
+      };
+
+      // Render Session Summary View
+      const renderSessionSummary = () => {
+        const totalCards = sessionStats.correct + sessionStats.incorrect;
+        const accuracy = totalCards > 0 ? Math.round((sessionStats.correct / totalCards) * 100) : 0;
+        
+        // Mensajes motivacionales según el rendimiento
+        let motivationalMessage = '';
+        let emoji = '';
+        if (accuracy >= 90) {
+          motivationalMessage = '¡Excelente trabajo! Tienes un dominio impresionante';
+          emoji = '🌟';
+        } else if (accuracy >= 70) {
+          motivationalMessage = '¡Muy bien! Vas por buen camino';
+          emoji = '👍';
+        } else if (accuracy >= 50) {
+          motivationalMessage = '¡Buen esfuerzo! Sigue practicando';
+          emoji = '💪';
+        } else {
+          motivationalMessage = '¡No te rindas! La práctica hace al maestro';
+          emoji = '🚀';
+        }
+        
+        return (
+          <>
+            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+              <div style={{ fontSize: '4rem', marginBottom: '15px' }}>{emoji}</div>
+              <h2 className="section-title" style={{ justifyContent: 'center', marginBottom: '10px' }}>¡Sesión Completada!</h2>
+              <p style={{ fontSize: '1.3rem', color: 'var(--dark)', fontWeight: '600' }}>
+                {motivationalMessage}
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+              <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: '30px', borderRadius: '20px', textAlign: 'center', color: 'white' }}>
+                <div style={{ fontSize: '3rem', fontWeight: '700', marginBottom: '10px' }}>{totalCards}</div>
+                <div style={{ fontSize: '1.1rem', opacity: 0.9 }}>Tarjetas Estudiadas</div>
+              </div>
+              
+              <div style={{ background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)', padding: '30px', borderRadius: '20px', textAlign: 'center', color: 'white' }}>
+                <div style={{ fontSize: '3rem', fontWeight: '700', marginBottom: '10px' }}>{sessionStats.correct}</div>
+                <div style={{ fontSize: '1.1rem', opacity: 0.9 }}>Correctas ✅</div>
+              </div>
+              
+              <div style={{ background: 'linear-gradient(135deg, #ee5a6f 0%, #f29263 100%)', padding: '30px', borderRadius: '20px', textAlign: 'center', color: 'white' }}>
+                <div style={{ fontSize: '3rem', fontWeight: '700', marginBottom: '10px' }}>{sessionStats.incorrect}</div>
+                <div style={{ fontSize: '1.1rem', opacity: 0.9 }}>Incorrectas ❌</div>
+              </div>
+              
+              <div style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', padding: '30px', borderRadius: '20px', textAlign: 'center', color: 'white' }}>
+                <div style={{ fontSize: '3rem', fontWeight: '700', marginBottom: '10px' }}>{accuracy}%</div>
+                <div style={{ fontSize: '1.1rem', opacity: 0.9 }}>Precisión</div>
+              </div>
+            </div>
+
+            {sessionStats.cards.length > 0 && (
+              <div style={{ background: '#f8f9fa', padding: '25px', borderRadius: '20px', marginBottom: '30px' }}>
+                <h3 style={{ fontSize: '1.5rem', marginBottom: '20px', fontWeight: '700' }}>
+                  📝 Detalle de Respuestas
+                </h3>
+                <div style={{ display: 'grid', gap: '10px', maxHeight: '400px', overflowY: 'auto' }}>
+                  {sessionStats.cards.map((card, index) => (
+                    <div key={index} style={{ 
+                      background: 'white', 
+                      padding: '15px', 
+                      borderRadius: '12px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      border: `2px solid ${card.isCorrect ? 'var(--success)' : 'var(--primary)'}`
+                    }}>
+                      <div>
+                        <strong style={{ fontSize: '1.1rem' }}>{card.front}</strong>
+                        <span style={{ color: 'var(--gray)', marginLeft: '10px' }}>→ {card.back}</span>
+                      </div>
+                      <div style={{ 
+                        fontSize: '1.5rem',
+                        padding: '8px 15px',
+                        borderRadius: '10px',
+                        background: card.isCorrect ? 'var(--success)' : 'var(--primary)',
+                        color: 'white'
+                      }}>
+                        {card.isCorrect ? '✅' : '❌'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button 
+                className="btn btn-primary"
+                onClick={() => {
+                  setView('study-selection');
+                }}
+                style={{ fontSize: '1.1rem', padding: '15px 30px' }}
+              >
+                🔄 Nueva Sesión
+              </button>
+              <button 
+                className="btn btn-secondary"
+                onClick={() => {
+                  setView('statistics');
+                }}
+                style={{ fontSize: '1.1rem', padding: '15px 30px' }}
+              >
+                📊 Ver Estadísticas Totales
+              </button>
+              <button 
+                className="btn btn-outline"
+                onClick={() => {
+                  setView('collections');
+                  setSelectedCollectionsForStudy([]);
+                }}
+                style={{ fontSize: '1.1rem', padding: '15px 30px' }}
+              >
+                🏠 Volver a Inicio
+              </button>
+            </div>
+          </>
+        );
+      };
+
+      // Render Study Selection View
+      const renderStudySelection = () => (
+        <>
+          <h2 className="section-title">🎯 Selecciona Colecciones para Estudiar</h2>
+          
+          <div style={{ background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)', padding: '20px', borderRadius: '15px', marginBottom: '25px', textAlign: 'center' }}>
+            <p style={{ fontSize: '1.1rem', color: 'var(--dark)', fontWeight: '600' }}>
+              🔀 Las tarjetas se mostrarán en orden <strong>aleatorio</strong> para mejorar tu aprendizaje
+            </p>
+          </div>
+          
+          {collections.length === 0 ? (
+            <div className="empty-state">
+              <h3>No hay colecciones disponibles</h3>
+              <p>Crea algunas colecciones primero</p>
+              <button className="btn btn-primary" onClick={() => setView('collections')}>
+                Ir a Colecciones
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="collection-selector">
+                {collections.map((collection) => {
+                  const cardCount = getFlashcardsByCollection(collection.id).length;
+                  if (cardCount === 0) return null;
+                  
+                  return (
+                    <div key={collection.id} className="collection-checkbox">
+                      <input
+                        type="checkbox"
+                        id={`study-${collection.id}`}
+                        checked={selectedCollectionsForStudy.includes(collection.id)}
+                        onChange={() => toggleCollectionSelection(collection.id)}
+                      />
+                      <label htmlFor={`study-${collection.id}`}>
+                        {collection.name} ({cardCount})
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={{ textAlign: 'center', marginTop: '30px' }}>
+                <button 
+                  className="btn btn-primary"
+                  onClick={startStudySession}
+                  disabled={selectedCollectionsForStudy.length === 0}
+                  style={{ fontSize: '1.2rem', padding: '15px 40px' }}
+                >
+                  🚀 Comenzar a Estudiar
+                </button>
+              </div>
+            </>
+          )}
+        </>
+      );
+
+      // Render Study Mode
+      const renderStudy = () => {
+        const studyCards = getStudyFlashcards();
+        
+        if (studyCards.length === 0) {
+          return (
+            <div className="empty-state">
+              <h3>No hay flashcards para estudiar</h3>
+              <p>Selecciona colecciones con flashcards</p>
+              <button className="btn btn-primary" onClick={() => setView('collections')}>
+                Volver
+              </button>
+            </div>
+          );
+        }
+
+        const currentCard = studyCards[currentCardIndex];
+
+        return (
+          <>
+            <button 
+              className="btn btn-outline back-button"
+              onClick={() => {
+                // Verificar si el usuario ha respondido al menos una tarjeta
+                if (sessionStats.correct + sessionStats.incorrect > 0) {
+                  setView('session-summary');
+                } else {
+                  setView('collections');
+                  setSelectedCollectionsForStudy([]);
+                }
+              }}
+            >
+              ← Terminar Sesión
+            </button>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 className="section-title">🎓 Modo de Estudio</h2>
+              <button 
+                className="btn btn-secondary"
+                onClick={reshuffleCards}
+                title="Mezclar nuevamente las tarjetas"
+              >
+                🔀 Mezclar
+              </button>
+            </div>
+
+            <div className={`flashcard-3d ${isFlipped ? 'flipped' : ''}`} onClick={toggleFlip}>
+              <div className="flashcard-inner">
+                <div className="flashcard-front">
+                  <div style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '10px' }}>
+                    Frente
+                  </div>
+                  {currentCard.front}
+                </div>
+                <div className="flashcard-back">
+                  <div style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '10px' }}>
+                    Traducción
+                  </div>
+                  {currentCard.back}
+                </div>
+              </div>
+            </div>
+
+            <div className="hint-text">
+              💡 Haz clic en la tarjeta para voltearla | 🔀 Orden aleatorio
+            </div>
+
+            <div className="flashcard-counter">
+              Tarjeta {currentCardIndex + 1} de {studyCards.length}
+              {sessionStats.correct + sessionStats.incorrect > 0 && (
+                <div style={{ marginTop: '10px', fontSize: '1rem', color: 'var(--secondary)' }}>
+                  📊 Sesión: {sessionStats.correct}✅ / {sessionStats.incorrect}❌
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '30px', flexWrap: 'wrap' }}>
+              <button 
+                className="btn btn-danger"
+                onClick={() => markAnswer(false)}
+                style={{ fontSize: '1.2rem', padding: '15px 40px', minWidth: '180px' }}
+              >
+                ❌ Incorrecta
+              </button>
+              <button 
+                className="btn btn-success"
+                onClick={() => markAnswer(true)}
+                style={{ fontSize: '1.2rem', padding: '15px 40px', minWidth: '180px' }}
+              >
+                ✅ Correcta
+              </button>
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: '20px', color: 'var(--gray)', fontSize: '0.95rem' }}>
+              Responde y avanzarás automáticamente a la siguiente
+            </div>
+
+            <div className="study-controls">
+              <button 
+                className="btn btn-secondary"
+                onClick={previousCard}
+                style={{ fontSize: '1.2rem', padding: '15px 30px' }}
+              >
+                ⬅️ Anterior
+              </button>
+              <button 
+                className="btn btn-secondary"
+                onClick={nextCard}
+                style={{ fontSize: '1.2rem', padding: '15px 30px' }}
+              >
+                Siguiente ➡️
+              </button>
+            </div>
+          </>
+        );
+      };
+
+      return (
+        <div className="app-container">
+          {showInstallBanner && (
+            <InstallBanner 
+              onInstall={handleInstallClick}
+              onDismiss={handleDismissInstall}
+            />
+          )}
+          
+          <div className="header">
+            <h1>FlashLearn</h1>
+            <p>Aprende idiomas de forma divertida 🌍</p>
+            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button className="btn btn-outline" onClick={exportData} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '2px solid white' }}>
+                💾 Exportar Datos
+              </button>
+              <label className="btn btn-outline" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '2px solid white', cursor: 'pointer' }}>
+                📂 Importar Datos
+                <input type="file" accept=".json" onChange={importData} style={{ display: 'none' }} />
+              </label>
+            </div>
+            <div style={{ marginTop: '15px', fontSize: '0.9rem', opacity: 0.8 }}>
+              ✅ Tus datos se guardan automáticamente
+              {(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) && (
+                <span style={{ marginLeft: '10px' }}>| 📱 Modo App</span>
+              )}
+            </div>
+          </div>
+
+          <div className="main-card">
+            <div className="nav-tabs">
+              <button 
+                className={`nav-tab ${view === 'collections' || view === 'collection-detail' ? 'active' : ''}`}
+                onClick={() => setView('collections')}
+              >
+                📚 Colecciones
+              </button>
+              <button 
+                className={`nav-tab ${view === 'study' ? 'active' : ''}`}
+                onClick={() => setView('study-selection')}
+              >
+                🎯 Estudiar
+              </button>
+              <button 
+                className={`nav-tab ${view === 'statistics' ? 'active' : ''}`}
+                onClick={() => setView('statistics')}
+              >
+                📊 Estadísticas
+              </button>
+            </div>
+
+            {view === 'collections' && renderCollections()}
+            {view === 'collection-detail' && renderCollectionDetail()}
+            {view === 'study-selection' && renderStudySelection()}
+            {view === 'study' && renderStudy()}
+            {view === 'statistics' && renderStatistics()}
+            {view === 'session-summary' && renderSessionSummary()}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+
+</body>
+</html>
