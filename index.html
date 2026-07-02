@@ -1619,7 +1619,7 @@
                   if (cardCount === 0) return null;
                   
                   return (
-                    <div key={collection.id} className="collection-checkbox">
+                    <div key={collection.id} className="collection-checkbox" onClick={() => toggleCollectionSelection(collection.id)>
                       <input
                         type="checkbox"
                         id={`study-${collection.id}`}
