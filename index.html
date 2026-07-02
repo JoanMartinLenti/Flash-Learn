@@ -509,7 +509,7 @@
 
     .hint-text {
       text-align: center;
-      color: white;
+      color: black;
       font-size: 1.1rem;
       margin-top: 15px;
       opacity: 0.9;
@@ -1804,7 +1804,7 @@
                 📚 Colecciones
               </button>
               <button 
-                className={`nav-tab ${view === 'study' ? 'active' : ''}`}
+                className={`nav-tab ${view === 'study' || view === 'study-selection' ? 'active' : ''}`}
                 onClick={() => setView('study-selection')}
               >
                 🎯 Estudiar
